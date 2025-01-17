@@ -15,9 +15,9 @@ def register():
         error = None
         db = get_db()
 
-        if username is None:
+        if not username:
             error = 'O usuário é obrigatório!'
-        elif password is None:
+        elif not password:
             error = 'A senha é obrigatória!'
 
         if error is None:
@@ -26,6 +26,7 @@ def register():
                     'INSERT INTO user (username, password) VALUES (?, ?)',
                     (username, generate_password_hash(password))
                 )
+                db.commit()
             except db.IntegrityError:
                 error = 'Usuário já cadastrado!'
             else:
@@ -45,37 +46,26 @@ def login():
 
         user = db.execute(
             'SELECT * FROM user WHERE username = ?', (username,)
-        ).fetchone
+        ).fetchone()
 
         if user is None:
             error = 'Usuário inválido!'
-        elif not check_password_hash(user['password', password]):
+        elif not check_password_hash(user['password'], password):
             error = 'Senha inválida!'
         
         if error is None:
             session.clear()
             session['user_id'] = user['id']
-            redirect(url_for('index'))
-
-        flash(error) 
+            return redirect(url_for('index'))
+        else:
+            flash(error) 
 
     return render_template('auth/login.html')
-
-@bp.before_request
-def load_logged_in_user():
-    user_id = session.get('user_id')
-
-    if user_id is None:
-        g.user = None
-    else:
-        g.user = get_db().execute(
-            'SELECT * FROM user WHERE id = ?', (user_id,)
-        ).fetchone
 
 @bp.route('/logout')
 def logout():
     session.clear()
-    redirect(url_for('index'))
+    return redirect(url_for('index'))
 
 def login_required(view):
     @functools.wraps(view)

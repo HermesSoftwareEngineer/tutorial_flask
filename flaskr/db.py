@@ -14,7 +14,8 @@ def get_db():
             # Configuração para detecção automática de tipos
             detect_types=sqlite3.PARSE_DECLTYPES
         )
-    
+        g.db.row_factory = sqlite3.Row # Configurando o retorno como dicionário
+
     # Retorna a conexão com o banco de dados
     return g.db
 

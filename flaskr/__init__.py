@@ -1,5 +1,6 @@
 import os
-from flask import Flask
+from flask import (Flask, g, session)
+from .db import get_db
 
 def create_app(teste_config=None):
 
@@ -28,5 +29,20 @@ def create_app(teste_config=None):
 
     from . import auth
     app.register_blueprint(auth.bp)
+
+    from . import blog
+    app.register_blueprint(blog.bp)
+    app.add_url_rule('/', endpoint='index')
+
+    @app.before_request
+    def load_logged_in_user():
+        user_id = session.get('user_id')
+
+        if user_id is None:
+            g.user = None
+        else:
+            g.user = get_db().execute(
+                'SELECT * FROM user WHERE id = ?', (user_id,)
+            ).fetchone()
 
     return app
